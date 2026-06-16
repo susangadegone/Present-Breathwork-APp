@@ -1,212 +1,133 @@
 import React, { useState, useEffect } from 'react';
 import './Website.css';
 
-const Website = ({ onTryApp }) => {
-  const [activeSection, setActiveSection] = useState('hero');
-  const [isScrolled, setIsScrolled] = useState(false);
+export default function Website({ onStartSession, onOpenApp }) {
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-      
-      // Update active section based on scroll position
-      const sections = ['hero', 'features', 'exercises'];
-      const current = sections.find(section => {
-        const element = document.getElementById(section);
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          return rect.top <= 150 && rect.bottom >= 150;
-        }
-        return false;
-      });
-      if (current) setActiveSection(current);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const fn = () => setScrolled(window.scrollY > 40);
+    window.addEventListener('scroll', fn);
+    return () => window.removeEventListener('scroll', fn);
   }, []);
 
-  const scrollToSection = (sectionId) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+  const TECHNIQUES = [
+    {
+      name: 'Box Breathing',
+      tags: 'Stress · Focus',
+      time: '1–2 min',
+      desc: 'Inhale 4, hold 4, exhale 4, hold 4. Used by Navy SEALs under pressure.',
+    },
+    {
+      name: '4-7-8 Breathing',
+      tags: 'Anxiety · Sleep',
+      time: '1–3 min',
+      desc: "Inhale 4, hold 7, exhale 8. Dr. Weil's well-studied calming method.",
+    },
+    {
+      name: 'Deep Belly Breath',
+      tags: 'Calm · Reset',
+      time: '1–2 min',
+      desc: 'Slow diaphragmatic breathing that activates the parasympathetic nervous system.',
+    },
+    {
+      name: '5-4-3-2-1 Grounding',
+      tags: 'Anxiety · Panic',
+      time: '3–5 min',
+      desc: 'Use your five senses to pull attention back to the present moment.',
+    },
+  ];
 
   return (
-    <div className="website">
-      {/* Navigation */}
-      <nav className={`website-nav ${isScrolled ? 'scrolled' : ''}`}>
-        <div className="nav-container">
-          <div className="nav-logo">
-            <div className="logo-icon-small">
-              <svg viewBox="0 0 40 40">
-                <circle cx="20" cy="20" r="18" fill="none" stroke="currentColor" strokeWidth="2"/>
-                <path d="M 12 20 Q 20 12, 28 20" fill="none" stroke="currentColor" strokeWidth="2"/>
-              </svg>
-            </div>
-            <span>Present Breathwork</span>
-          </div>
+    <div className="site">
+      <nav className={`site-nav${scrolled ? ' site-nav--solid' : ''}`}>
+        <div className="nav-row">
+          <span className="nav-brand">Present</span>
           <div className="nav-links">
-            <a href="#hero" className={activeSection === 'hero' ? 'active' : ''}>Home</a>
-            <a href="#features" className={activeSection === 'features' ? 'active' : ''}>Features</a>
-            <a href="#exercises" className={activeSection === 'exercises' ? 'active' : ''}>Exercises</a>
-            <button onClick={onTryApp} className="nav-cta">Try Interactive Demo</button>
+            <a href="#techniques">Techniques</a>
+            <a href="#about">About</a>
           </div>
+          <button className="nav-cta" onClick={onOpenApp}>Open App</button>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section id="hero" className="hero-section">
-        <div className="hero-content">
-          <div className="breathing-animation-hero">
-            <div className="circle-hero circle-1"></div>
-            <div className="circle-hero circle-2"></div>
-            <div className="circle-hero circle-3"></div>
-            <div className="logo-center-hero">
-              <svg viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="40" fill="none" stroke="white" strokeWidth="3"/>
-                <path d="M 30 50 Q 50 30, 70 50 T 70 70" fill="none" stroke="white" strokeWidth="3"/>
-              </svg>
-            </div>
-          </div>
-          <h1 className="hero-title">Find Your Calm<br/>One Breath at a Time</h1>
-          <p className="hero-subtitle">
-            Transform stress into serenity with guided breathing exercises designed for modern life
+      {/* Hero */}
+      <section className="hero">
+        <div className="hero-orb-wrap">
+          <div className="hero-orb" />
+        </div>
+        <div className="hero-copy">
+          <h1>Breathe with intention.</h1>
+          <p>
+            Guided breathing and grounding exercises — no account, no ads, no noise.
+            Just your breath.
           </p>
-          <div className="hero-buttons">
-            <button onClick={onTryApp} className="hero-btn primary">
-              Try Interactive Demo
-            </button>
-            <button onClick={() => scrollToSection('features')} className="hero-btn secondary">
-              Learn More
-            </button>
-          </div>
-          {/* Slim hero without vanity metrics */}
-        </div>
-        <div className="scroll-indicator">
-          <span>Scroll to explore</span>
-          <div className="scroll-arrow">↓</div>
+          <button className="cta-btn" onClick={onStartSession}>Start a session →</button>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="features-section">
-        <div className="section-container">
-          <h2 className="section-title">Why Choose Present Breathwork?</h2>
-          <p className="section-subtitle">Everything you need to master your breath and mind</p>
-          
-          <div className="features-grid">
-            <div className="feature-card">
-              <div className="feature-icon">🧘</div>
-              <h3>17 Guided Exercises</h3>
-              <p>From quick 30-second resets to deep 5-minute sessions, find the perfect practice for any moment</p>
-            </div>
-            
-            <div className="feature-card">
-              <div className="feature-icon">🎯</div>
-              <h3>Personalized Categories</h3>
-              <p>Exercises organized by your needs: Stress Relief, Energy Boost, Sleep Preparation, and more</p>
-            </div>
-            
-            <div className="feature-card">
-              <div className="feature-icon">📊</div>
-              <h3>Track Your Progress</h3>
-              <p>See your wellness journey unfold with detailed metrics, streaks, and achievements</p>
-            </div>
-            
-            <div className="feature-card">
-              <div className="feature-icon">🔊</div>
-              <h3>Audio Guidance</h3>
-              <p>Gentle audio cues guide you through each breath with soothing tones</p>
-            </div>
-            
-            <div className="feature-card">
-              <div className="feature-icon">⚡</div>
-              <h3>Quick Mode</h3>
-              <p>In a rush? Every exercise has a quick version for busy moments</p>
-            </div>
-            
-            <div className="feature-card">
-              <div className="feature-icon">💬</div>
-              <h3>Simple Feedback</h3>
-              <p>Quick check-ins help you understand what works best for you</p>
-            </div>
+      {/* Techniques */}
+      <section id="techniques" className="techniques">
+        <div className="section-inner">
+          <div className="section-head">
+            <h2>Techniques</h2>
+            <p>Science-backed methods for stress, sleep, energy, and focus.</p>
           </div>
-        </div>
-      </section>
-
-      {/* Exercises Showcase */}
-      <section id="exercises" className="exercises-section">
-        <div className="section-container">
-          <h2 className="section-title">Breathing Techniques for Every Need</h2>
-          <p className="section-subtitle">Science-backed exercises used by Navy SEALs, meditation experts, and wellness professionals</p>
-          
-          <div className="exercises-showcase">
-            <div className="exercise-showcase-card">
-              <div className="exercise-badge stress">Stress & Anxiety</div>
-              <h3>Box Breathing</h3>
-              <p>The Navy SEAL technique for instant calm. Perfect for high-pressure moments.</p>
-              <div className="exercise-duration">1-2 minutes</div>
-            </div>
-            
-            <div className="exercise-showcase-card">
-              <div className="exercise-badge energy">Energy Boost</div>
-              <h3>Power Breath</h3>
-              <p>Quick energy surge to wake up your body and sharpen your mind.</p>
-              <div className="exercise-duration">30-60 seconds</div>
-            </div>
-            
-            <div className="exercise-showcase-card">
-              <div className="exercise-badge sleep">Sleep</div>
-              <h3>4-7-8 Breathing</h3>
-              <p>Dr. Weil's natural tranquilizer. Fall asleep faster and deeper.</p>
-              <div className="exercise-duration">2-4 minutes</div>
-            </div>
-            
-            <div className="exercise-showcase-card">
-              <div className="exercise-badge everyday">Daily Practice</div>
-              <h3>Deep Belly Breath</h3>
-              <p>Activate your calm nervous system for lasting peace.</p>
-              <div className="exercise-duration">1-2 minutes</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* End of slim landing sections */}
-
-      {/* Footer */}
-      <footer className="website-footer">
-        <div className="footer-content">
-          <div className="footer-section">
-            <div className="footer-logo">
-              <div className="logo-icon-small">
-                <svg viewBox="0 0 40 40">
-                  <circle cx="20" cy="20" r="18" fill="none" stroke="currentColor" strokeWidth="2"/>
-                  <path d="M 12 20 Q 20 12, 28 20" fill="none" stroke="currentColor" strokeWidth="2"/>
-                </svg>
+          <div className="tech-grid">
+            {TECHNIQUES.map(t => (
+              <div key={t.name} className="tech-card">
+                <div className="tech-meta">
+                  <span className="tech-tag">{t.tags}</span>
+                  <span className="tech-time">{t.time}</span>
+                </div>
+                <h3>{t.name}</h3>
+                <p>{t.desc}</p>
               </div>
-              <span>Present Breathwork</span>
-            </div>
-            <p>Find your calm, one breath at a time.</p>
-          </div>
-          
-          <div className="footer-section">
-            <h4>Quick Links</h4>
-            <a href="#features">Features</a>
-            <a href="#exercises">Exercises</a>
-            <button className="nav-cta" onClick={onTryApp} style={{alignSelf: 'flex-start'}}>Try Interactive Demo</button>
+            ))}
           </div>
         </div>
-        
-        <div className="footer-bottom">
-          <p>© 2025 Present Breathwork. Made with ❤️ for your wellness.</p>
+      </section>
+
+      {/* About */}
+      <section id="about" className="about">
+        <div className="section-inner about-inner">
+          <div className="about-copy">
+            <h2>No fluff. Just breathing.</h2>
+            <p>
+              Present is a simple breathwork tool. No subscription, no streak tracking,
+              no push notifications asking you to "maintain your streak."
+            </p>
+            <p>Pick an exercise. Follow along. Feel the difference.</p>
+            <button className="cta-btn" onClick={onStartSession} style={{ marginTop: 24 }}>
+              Try it now →
+            </button>
+          </div>
+          <div className="about-features">
+            <div className="feature-row">
+              <span className="feature-title">12+ exercises</span>
+              <span className="feature-desc">Breathing, grounding, calm, and energy</span>
+            </div>
+            <div className="feature-row">
+              <span className="feature-title">No headphones needed</span>
+              <span className="feature-desc">Visual-only guidance — use anywhere, quietly</span>
+            </div>
+            <div className="feature-row">
+              <span className="feature-title">Quick or full sessions</span>
+              <span className="feature-desc">Every exercise has a 30–60 second quick mode</span>
+            </div>
+            <div className="feature-row">
+              <span className="feature-title">Works offline</span>
+              <span className="feature-desc">No network required once the page loads</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer className="site-footer">
+        <div className="footer-row">
+          <span className="nav-brand">Present</span>
+          <span className="footer-note">Made for calm minds.</span>
         </div>
       </footer>
     </div>
   );
-};
-
-export default Website;
-
+}

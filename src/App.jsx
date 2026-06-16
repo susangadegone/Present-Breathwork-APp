@@ -1,567 +1,548 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
-import { colors } from './theme';
 
-const App = () => {
-  const [currentView, setCurrentView] = useState('home');
+// ── Exercise data ────────────────────────────────────────────────────────────
+
+const EXERCISES = {
+  boxBreathing: {
+    name: 'Box Breathing',
+    duration: 120,
+    quickDuration: 60,
+    category: 'breathing',
+    description: 'Navy SEAL technique for instant calm',
+    phases: [
+      { name: 'Inhale', key: 'inhale', duration: 4, instruction: 'Breathe in through your nose' },
+      { name: 'Hold',   key: 'hold',   duration: 4, instruction: 'Hold gently' },
+      { name: 'Exhale', key: 'exhale', duration: 4, instruction: 'Release through your mouth' },
+      { name: 'Hold',   key: 'hold',   duration: 4, instruction: 'Rest empty' },
+    ],
+  },
+  deepBelly: {
+    name: 'Deep Belly Breath',
+    duration: 120,
+    quickDuration: 60,
+    category: 'breathing',
+    description: 'Activate your parasympathetic nervous system',
+    phases: [
+      { name: 'Inhale', key: 'inhale', duration: 5, instruction: 'Breathe deep into your belly' },
+      { name: 'Exhale', key: 'exhale', duration: 7, instruction: 'Release completely' },
+    ],
+  },
+  calming478: {
+    name: '4-7-8 Breathing',
+    duration: 96,
+    quickDuration: 48,
+    category: 'breathing',
+    description: "Dr. Weil's natural tranquilizer",
+    phases: [
+      { name: 'Inhale', key: 'inhale', duration: 4, instruction: 'Inhale through your nose' },
+      { name: 'Hold',   key: 'hold',   duration: 7, instruction: 'Hold the breath' },
+      { name: 'Exhale', key: 'exhale', duration: 8, instruction: 'Exhale fully through your mouth' },
+    ],
+  },
+  equalBreath: {
+    name: 'Equal Breath',
+    duration: 80,
+    quickDuration: 40,
+    category: 'breathing',
+    description: 'Balanced in and out for equilibrium',
+    phases: [
+      { name: 'Inhale', key: 'inhale', duration: 4, instruction: 'Breathe in slowly' },
+      { name: 'Exhale', key: 'exhale', duration: 4, instruction: 'Breathe out slowly' },
+    ],
+  },
+  fiveSenses: {
+    name: '5-4-3-2-1 Grounding',
+    duration: 180,
+    quickDuration: 90,
+    category: 'grounding',
+    description: 'Anchor yourself in the present moment',
+    phases: [
+      { name: 'See',   key: 'notice', duration: 30, instruction: 'Name 5 things you can see' },
+      { name: 'Feel',  key: 'notice', duration: 30, instruction: 'Notice 4 things you can feel' },
+      { name: 'Hear',  key: 'notice', duration: 30, instruction: 'Identify 3 things you can hear' },
+      { name: 'Smell', key: 'notice', duration: 30, instruction: 'Find 2 things you can smell' },
+      { name: 'Taste', key: 'notice', duration: 30, instruction: '1 thing you can taste' },
+    ],
+  },
+  bodyScan: {
+    name: 'Body Scan',
+    duration: 200,
+    quickDuration: 100,
+    category: 'grounding',
+    description: 'Mindful awareness through the body',
+    phases: [
+      { name: 'Feet',  key: 'scan', duration: 40, instruction: 'Notice your feet and toes' },
+      { name: 'Legs',  key: 'scan', duration: 40, instruction: 'Scan your calves and thighs' },
+      { name: 'Torso', key: 'scan', duration: 40, instruction: 'Feel your chest and belly' },
+      { name: 'Arms',  key: 'scan', duration: 40, instruction: 'Notice your arms and hands' },
+      { name: 'Head',  key: 'scan', duration: 40, instruction: 'Relax your jaw, face, and scalp' },
+    ],
+  },
+  mindfulPause: {
+    name: 'Mindful Pause',
+    duration: 120,
+    quickDuration: 60,
+    category: 'grounding',
+    description: 'Stop, observe, return to now',
+    phases: [
+      { name: 'Observe', key: 'pause', duration: 30, instruction: 'Simply observe your breath' },
+    ],
+  },
+  anxietyRelief: {
+    name: 'Anxiety Relief',
+    duration: 108,
+    quickDuration: 54,
+    category: 'calm',
+    description: 'Extended exhales activate the calm response',
+    phases: [
+      { name: 'Inhale', key: 'inhale', duration: 3, instruction: 'Slow, gentle inhale' },
+      { name: 'Exhale', key: 'exhale', duration: 6, instruction: 'Long, slow exhale' },
+    ],
+  },
+  eveningCalm: {
+    name: 'Evening Calm',
+    duration: 120,
+    quickDuration: 60,
+    category: 'calm',
+    description: 'Wind down at the end of the day',
+    phases: [
+      { name: 'Inhale', key: 'inhale', duration: 5, instruction: 'Breathe in slowly' },
+      { name: 'Exhale', key: 'exhale', duration: 7, instruction: 'Release the day' },
+    ],
+  },
+  deepRelaxation: {
+    name: 'Deep Relaxation',
+    duration: 160,
+    quickDuration: 80,
+    category: 'calm',
+    description: 'Full body and mind release',
+    phases: [
+      { name: 'Inhale', key: 'inhale', duration: 6,  instruction: 'Deep, slow breath in' },
+      { name: 'Exhale', key: 'exhale', duration: 10, instruction: 'Complete release' },
+    ],
+  },
+  energizingBreath: {
+    name: 'Energizing Breath',
+    duration: 60,
+    quickDuration: 30,
+    category: 'energy',
+    description: 'Crisp rhythm to wake up body and mind',
+    phases: [
+      { name: 'Inhale', key: 'inhale', duration: 2, instruction: 'Quick energizing inhale' },
+      { name: 'Exhale', key: 'exhale', duration: 2, instruction: 'Forceful exhale' },
+    ],
+  },
+  morningBoost: {
+    name: 'Morning Boost',
+    duration: 60,
+    quickDuration: 30,
+    category: 'energy',
+    description: 'Start the day with intention',
+    phases: [
+      { name: 'Inhale', key: 'inhale', duration: 4, instruction: 'Breathe in deeply' },
+      { name: 'Hold',   key: 'hold',   duration: 2, instruction: 'Feel energized' },
+      { name: 'Exhale', key: 'exhale', duration: 4, instruction: 'Release and start fresh' },
+    ],
+  },
+};
+
+const CATEGORIES = {
+  breathing: {
+    name: 'Breathing',
+    description: 'Breathwork for calm and focus',
+    exercises: ['boxBreathing', 'deepBelly', 'calming478', 'equalBreath'],
+  },
+  grounding: {
+    name: 'Grounding',
+    description: 'Present-moment awareness',
+    exercises: ['fiveSenses', 'bodyScan', 'mindfulPause'],
+  },
+  calm: {
+    name: 'Calm',
+    description: 'Find stillness and ease',
+    exercises: ['anxietyRelief', 'eveningCalm', 'deepRelaxation'],
+  },
+  energy: {
+    name: 'Energy',
+    description: 'Boost alertness and focus',
+    exercises: ['energizingBreath', 'morningBoost'],
+  },
+};
+
+// ── Assessment ───────────────────────────────────────────────────────────────
+
+const QUESTIONS = [
+  {
+    id: 'feeling',
+    q: 'How are you feeling right now?',
+    opts: [
+      { value: 'anxious',   label: 'Stressed or anxious' },
+      { value: 'tired',     label: 'Tired, low energy' },
+      { value: 'restless',  label: "Restless, can't settle" },
+      { value: 'focus',     label: 'Want to focus' },
+      { value: 'exploring', label: 'Just exploring' },
+    ],
+  },
+  {
+    id: 'time',
+    q: 'How much time do you have?',
+    opts: [
+      { value: 'short',  label: 'About a minute' },
+      { value: 'medium', label: '2–3 minutes' },
+      { value: 'long',   label: '5 minutes or more' },
+    ],
+  },
+];
+
+const RECOMMEND_MAP = {
+  anxious:   { short: 'boxBreathing',    medium: 'calming478',    long: 'deepRelaxation' },
+  tired:     { short: 'energizingBreath', medium: 'morningBoost', long: 'morningBoost' },
+  restless:  { short: 'anxietyRelief',   medium: 'eveningCalm',   long: 'deepRelaxation' },
+  focus:     { short: 'equalBreath',     medium: 'boxBreathing',  long: 'deepBelly' },
+  exploring: { short: 'deepBelly',       medium: 'boxBreathing',  long: 'calming478' },
+};
+
+const FEELING_CONTEXT = {
+  anxious:   'To calm your nervous system and ease stress',
+  tired:     'To wake up your body and restore energy',
+  restless:  'To slow racing thoughts and help you settle',
+  focus:     'To clear mental noise and sharpen attention',
+  exploring: 'A solid, well-rounded place to start',
+};
+
+const getRecommendation = (feeling, time) =>
+  RECOMMEND_MAP[feeling]?.[time] || 'boxBreathing';
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+
+// ── Main component ───────────────────────────────────────────────────────────
+
+export default function App({ onExit, initialView = 'home' }) {
+  const [view, setView] = useState(initialView);
+
+  // Browse state
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [currentExercise, setCurrentExercise] = useState(null);
+
+  // Assessment state
+  const [assessStep, setAssessStep] = useState(0);
+  const [assessAnswers, setAssessAnswers] = useState({});
+  const [recommendedKey, setRecommendedKey] = useState(null);
+
+  // Exercise state
+  const [exercise, setExercise] = useState(null);
   const [isActive, setIsActive] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [breathPhase, setBreathPhase] = useState('inhale');
+  const [totalTime, setTotalTime] = useState(0);
+  const [phaseIndex, setPhaseIndex] = useState(0);
+  const [phaseTimeLeft, setPhaseTimeLeft] = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
-  const [quietMode, setQuietMode] = useState(false);
 
-  const intervalRef = useRef(null);
-  const phaseIntervalRef = useRef(null);
+  const phaseRef = useRef({ index: 0, timeLeft: 0 });
 
-  // Soothing color palette categories
-  const categories = {
-    breathing: {
-      name: 'Breathing',
-      icon: '🌬️',
-      description: 'Guided breathwork exercises',
-      color: colors.softBlue,
-      exercises: ['boxBreathing', 'deepBelly', 'calming478', 'equalBreath']
-    },
-    grounding: {
-      name: 'Grounding',
-      icon: '🌿',
-      description: 'Present moment awareness',
-      color: colors.forestGreen,
-      exercises: ['fiveSenses', 'bodyScan', 'mindfulPause', 'progressiveRelaxation']
-    },
-    calm: {
-      name: 'Calm',
-      icon: '💙',
-      description: 'Find peace and stillness',
-      color: colors.mutedPurple,
-      exercises: ['anxietyRelief', 'eveningCalm', 'deepRelaxation']
-    },
-    energy: {
-      name: 'Energy',
-      icon: '☀️',
-      description: 'Boost focus and alertness',
-      color: colors.accentOrange,
-      exercises: ['energizingBreath', 'powerBreath', 'morningBoost']
-    }
-  };
-
-  const exercises = {
-    // BREATHING (No headphones needed)
-    boxBreathing: {
-      name: 'Box Breathing',
-      duration: 120,
-      quickDuration: 60,
-      category: 'breathing',
-      needsHeadphones: false,
-      quietDiscreet: true,
-      phases: [
-        { name: 'Inhale', duration: 4, instruction: 'Breathe in slowly through your nose' },
-        { name: 'Hold', duration: 4, instruction: 'Hold gently' },
-        { name: 'Exhale', duration: 4, instruction: 'Release slowly through your mouth' },
-        { name: 'Hold', duration: 4, instruction: 'Pause empty' }
-      ],
-      description: 'Navy SEAL technique for instant calm',
-      benefits: 'Reduces stress, anxiety, and panic'
-    },
-    deepBelly: {
-      name: 'Deep Belly Breath',
-      duration: 120,
-      quickDuration: 60,
-      category: 'breathing',
-      needsHeadphones: false,
-      quietDiscreet: true,
-      phases: [
-        { name: 'Inhale', duration: 5, instruction: 'Breathe deeply into your belly' },
-        { name: 'Exhale', duration: 7, instruction: 'Release completely' }
-      ],
-      description: 'Activate your calm nervous system',
-      benefits: 'Lowers heart rate, reduces stress'
-    },
-    calming478: {
-      name: '4-7-8 Breathing',
-      duration: 90,
-      quickDuration: 45,
-      category: 'breathing',
-      needsHeadphones: false,
-      quietDiscreet: true,
-      phases: [
-        { name: 'Inhale', duration: 4, instruction: 'Breathe in through nose' },
-        { name: 'Hold', duration: 7, instruction: 'Hold the breath' },
-        { name: 'Exhale', duration: 8, instruction: 'Exhale through mouth' }
-      ],
-      description: 'Dr. Weil\'s natural tranquilizer',
-      benefits: 'Calms anxiety, stops panic attacks'
-    },
-    equalBreath: {
-      name: 'Equal Breath',
-      duration: 90,
-      quickDuration: 45,
-      category: 'breathing',
-      needsHeadphones: false,
-      quietDiscreet: true,
-      phases: [
-        { name: 'Inhale', duration: 4, instruction: 'Breathe in slowly' },
-        { name: 'Exhale', duration: 4, instruction: 'Breathe out slowly' }
-      ],
-      description: 'Balanced breathing for balance',
-      benefits: 'Centers the mind, creates equilibrium'
-    },
-
-    // GROUNDING EXERCISES
-    fiveSenses: {
-      name: '5-4-3-2-1 Grounding',
-      duration: 180,
-      quickDuration: 90,
-      category: 'grounding',
-      needsHeadphones: false,
-      quietDiscreet: true,
-      phases: [
-        { name: 'Notice', duration: 30, instruction: '5 things you see' },
-        { name: 'Notice', duration: 30, instruction: '4 things you feel' },
-        { name: 'Notice', duration: 30, instruction: '3 things you hear' },
-        { name: 'Notice', duration: 30, instruction: '2 things you smell' },
-        { name: 'Notice', duration: 30, instruction: '1 thing you taste' }
-      ],
-      description: 'Ground yourself using your five senses',
-      benefits: 'Brings you to the present moment'
-    },
-    bodyScan: {
-      name: 'Body Scan',
-      duration: 240,
-      quickDuration: 120,
-      category: 'grounding',
-      needsHeadphones: true,
-      quietDiscreet: false,
-      phases: [
-        { name: 'Scan', duration: 40, instruction: 'Notice your toes' },
-        { name: 'Scan', duration: 40, instruction: 'Notice your legs' },
-        { name: 'Scan', duration: 40, instruction: 'Notice your torso' },
-        { name: 'Scan', duration: 40, instruction: 'Notice your arms' },
-        { name: 'Scan', duration: 40, instruction: 'Notice your head' }
-      ],
-      description: 'Mindful body awareness practice',
-      benefits: 'Releases tension, increases body awareness'
-    },
-    mindfulPause: {
-      name: 'Mindful Pause',
-      duration: 120,
-      quickDuration: 60,
-      category: 'grounding',
-      needsHeadphones: false,
-      quietDiscreet: true,
-      phases: [
-        { name: 'Pause', duration: 30, instruction: 'Simply observe your breath' }
-      ],
-      description: 'Return to the present moment',
-      benefits: 'Grounds you, improves awareness'
-    },
-    progressiveRelaxation: {
-      name: 'Progressive Relaxation',
-      duration: 300,
-      quickDuration: 150,
-      category: 'grounding',
-      needsHeadphones: true,
-      quietDiscreet: false,
-      phases: [
-        { name: 'Tense', duration: 5, instruction: 'Tense your feet, then release' },
-        { name: 'Tense', duration: 5, instruction: 'Tense your legs, then release' },
-        { name: 'Tense', duration: 5, instruction: 'Tense your hands, then release' },
-        { name: 'Tense', duration: 5, instruction: 'Tense your shoulders, then release' }
-      ],
-      description: 'Release tension through your body',
-      benefits: 'Deep relaxation, stress relief'
-    },
-
-    // CALM EXERCISES
-    anxietyRelief: {
-      name: 'Anxiety Relief',
-      duration: 180,
-      quickDuration: 90,
-      category: 'calm',
-      needsHeadphones: false,
-      quietDiscreet: true,
-      phases: [
-        { name: 'Inhale', duration: 3, instruction: 'Slow, gentle inhale' },
-        { name: 'Exhale', duration: 6, instruction: 'Long, slow exhale' }
-      ],
-      description: 'Extended exhales for deep calm',
-      benefits: 'Stops racing thoughts, releases tension'
-    },
-    eveningCalm: {
-      name: 'Evening Calm',
-      duration: 180,
-      quickDuration: 90,
-      category: 'calm',
-      needsHeadphones: false,
-      quietDiscreet: true,
-      phases: [
-        { name: 'Inhale', duration: 5, instruction: 'Breathe in peace' },
-        { name: 'Exhale', duration: 7, instruction: 'Release the day' }
-      ],
-      description: 'Wind down after a busy day',
-      benefits: 'Calms mind, prepares for rest'
-    },
-    deepRelaxation: {
-      name: 'Deep Relaxation',
-      duration: 300,
-      quickDuration: 150,
-      category: 'calm',
-      needsHeadphones: true,
-      quietDiscreet: false,
-      phases: [
-        { name: 'Inhale', duration: 6, instruction: 'Deep, slow breath' },
-        { name: 'Exhale', duration: 10, instruction: 'Complete release' }
-      ],
-      description: 'Full body and mind relaxation',
-      benefits: 'Deep calm, profound rest'
-    },
-
-    // ENERGY EXERCISES
-    energizingBreath: {
-      name: 'Energizing Breath',
-      duration: 90,
-      quickDuration: 45,
-      category: 'energy',
-      needsHeadphones: false,
-      quietDiscreet: true,
-      phases: [
-        { name: 'Inhale', duration: 2, instruction: 'Quick, energizing inhale' },
-        { name: 'Exhale', duration: 2, instruction: 'Powerful exhale' }
-      ],
-      description: 'Wake up your body and mind',
-      benefits: 'Increases energy, lifts mood'
-    },
-    powerBreath: {
-      name: 'Power Breath',
-      duration: 60,
-      quickDuration: 30,
-      category: 'energy',
-      needsHeadphones: false,
-      quietDiscreet: true,
-      phases: [
-        { name: 'Inhale', duration: 1, instruction: 'Sharp inhale' },
-        { name: 'Exhale', duration: 1, instruction: 'Forceful exhale' }
-      ],
-      description: 'Instant energy surge',
-      benefits: 'Wakes you up, increases alertness'
-    },
-    morningBoost: {
-      name: 'Morning Boost',
-      duration: 120,
-      quickDuration: 60,
-      category: 'energy',
-      needsHeadphones: false,
-      quietDiscreet: true,
-      phases: [
-        { name: 'Inhale', duration: 4, instruction: 'Wake up your body' },
-        { name: 'Hold', duration: 2, instruction: 'Feel alive' },
-        { name: 'Exhale', duration: 4, instruction: 'Start fresh' }
-      ],
-      description: 'Perfect way to start your day',
-      benefits: 'Increases alertness, sets positive tone'
-    }
-  };
-
-  // Feedback questions
-  const feedbackQuestions = [
-    {
-      id: 'feeling',
-      question: 'How do you feel right now?',
-      options: ['Much better', 'Better', 'Same', 'Worse']
-    },
-    {
-      id: 'helpful',
-      question: 'Was this session helpful?',
-      options: ['Very helpful', 'Helpful', 'Somewhat', 'Not really']
-    }
-  ];
-
-  // Haptic feedback for quiet mode
-  const triggerHaptic = () => {
-    if (quietMode && 'vibrate' in navigator) {
-      navigator.vibrate(50);
-    }
-  };
-
-  // Start exercise
-  const startExercise = (exerciseKey, isQuick = false) => {
-    const exercise = exercises[exerciseKey];
-    const duration = isQuick ? exercise.quickDuration : exercise.duration;
-    
-    setCurrentExercise({ key: exerciseKey, ...exercise, actualDuration: duration });
-    setTimeLeft(duration);
+  const startExercise = (key, quick = false) => {
+    const ex = EXERCISES[key];
+    const duration = quick ? ex.quickDuration : ex.duration;
+    setExercise({ key, ...ex, actualDuration: duration });
+    setTotalTime(duration);
+    setPhaseIndex(0);
+    setPhaseTimeLeft(ex.phases[0].duration);
+    setShowFeedback(false);
     setIsActive(true);
-    setBreathPhase('inhale');
-    setCurrentView('exercise');
-    triggerHaptic();
+    setView('exercise');
   };
 
-  // Stop exercise
   const stopExercise = () => {
     setIsActive(false);
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    if (phaseIntervalRef.current) clearInterval(phaseIntervalRef.current);
     setShowFeedback(true);
   };
 
-  const completeFeedback = (answers) => {
-    setCurrentExercise(null);
-    setTimeLeft(0);
-    setBreathPhase('inhale');
+  const finishSession = () => {
+    setExercise(null);
+    setIsActive(false);
     setShowFeedback(false);
-    setCurrentView('home');
+    setView('home');
   };
 
-  const skipFeedback = () => {
-    setCurrentExercise(null);
-    setTimeLeft(0);
-    setBreathPhase('inhale');
-    setShowFeedback(false);
-    setCurrentView('home');
-  };
-
-  // Timer countdown
+  // Total countdown
   useEffect(() => {
-    if (isActive && timeLeft > 0) {
-      intervalRef.current = setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            setIsActive(false);
-            setShowFeedback(true);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    }
+    if (!isActive) return;
+    const id = setInterval(() => {
+      setTotalTime(t => {
+        if (t <= 1) { setIsActive(false); setShowFeedback(true); return 0; }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [isActive]);
 
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [isActive, timeLeft]);
-
-  // Breathing phase management
+  // Phase tracking
   useEffect(() => {
-    if (isActive && currentExercise) {
-      let phaseIndex = 0;
-      let phaseStartTime = Date.now();
+    if (!isActive || !exercise) return;
+    phaseRef.current = { index: 0, timeLeft: exercise.phases[0].duration };
+    setPhaseIndex(0);
+    setPhaseTimeLeft(exercise.phases[0].duration);
 
-      phaseIntervalRef.current = setInterval(() => {
-        const currentPhase = currentExercise.phases[phaseIndex];
-        const elapsed = Date.now() - phaseStartTime;
-        const currentPhaseDuration = currentPhase.duration * 1000;
+    const id = setInterval(() => {
+      let { index, timeLeft } = phaseRef.current;
+      timeLeft--;
+      if (timeLeft <= 0) {
+        index = (index + 1) % exercise.phases.length;
+        timeLeft = exercise.phases[index].duration;
+      }
+      phaseRef.current = { index, timeLeft };
+      setPhaseIndex(index);
+      setPhaseTimeLeft(timeLeft);
+    }, 1000);
 
-        if (elapsed >= currentPhaseDuration) {
-          phaseIndex = (phaseIndex + 1) % currentExercise.phases.length;
-          phaseStartTime = Date.now();
-          const newPhase = currentExercise.phases[phaseIndex].name.toLowerCase().replace(' ', '');
-          setBreathPhase(newPhase);
-          triggerHaptic();
-        }
-      }, 100);
+    return () => clearInterval(id);
+  }, [isActive, exercise]);
 
-      return () => {
-        if (phaseIntervalRef.current) clearInterval(phaseIntervalRef.current);
-      };
-    }
-      }, [isActive, currentExercise, quietMode]);
+  // ── Render ────────────────────────────────────────────────────────────────
 
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  if (showFeedback) {
+    return <FeedbackScreen onDone={finishSession} exerciseName={exercise?.name} />;
+  }
 
-  // Home View
-  const HomeView = () => (
-    <div className="home-view">
-      <div className="welcome-section">
-        <h1>Present</h1>
-        <p className="welcome-subtitle">You're safe. Slow down. This is the calm place.</p>
-      </div>
-
-      {/* Quiet Mode Toggle */}
-      <div className="quiet-mode-toggle">
-        <button 
-          className={`toggle-btn ${quietMode ? 'active' : ''}`}
-          onClick={() => setQuietMode(!quietMode)}
-        >
-          <span className="toggle-icon">{quietMode ? '🤫' : '🔊'}</span>
-          <div className="toggle-content">
-            <span className="toggle-label">
-              {quietMode ? 'Quiet Mode' : 'Normal Mode'}
-            </span>
-            <span className="toggle-description">
-              {quietMode ? 'No heavy breathing or sounds needed' : 'Full breathing exercises'}
-            </span>
-          </div>
-        </button>
-      </div>
-
-      <div className="categories-grid">
-        {Object.entries(categories).map(([key, category]) => (
-          <div 
-            key={key}
-            className="category-card"
-            style={{ borderLeftColor: category.color }}
-            onClick={() => {
-              setSelectedCategory(key);
-              setCurrentView('category');
-            }}
-          >
-            <div className="category-icon" style={{ backgroundColor: `${category.color}15` }}>
-              {category.icon}
-            </div>
-            <div className="category-info">
-              <h3>{category.name}</h3>
-              <p>{category.description}</p>
-            </div>
-            <div className="category-arrow">→</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  // Category View
-  const CategoryView = () => {
-    const category = categories[selectedCategory];
-    const categoryExercises = category.exercises.map(key => ({
-      key,
-      ...exercises[key]
-    }));
-
+  if (view === 'exercise' && exercise) {
+    const phase = exercise.phases[phaseIndex];
+    const progress = ((exercise.actualDuration - totalTime) / exercise.actualDuration) * 100;
     return (
-      <div className="category-view">
-        <div className="category-header">
-          <button className="back-btn" onClick={() => setCurrentView('home')}>
-            ←
-          </button>
-          <h2>{category.name}</h2>
+      <div className="ex-screen">
+        <div className="ex-topbar">
+          <button className="ex-stop" onClick={stopExercise} aria-label="Stop">✕</button>
+          <span className="ex-title">{exercise.name}</span>
+          <span className="ex-clock">{fmt(totalTime)}</span>
         </div>
 
-        <div className="exercises-list">
-          {categoryExercises.map((exercise) => (
-            <div key={exercise.key} className={`exercise-item ${exercise.quietDiscreet ? 'quiet-exercise' : ''}`}>
-              <div className="exercise-header">
-                <h3>{exercise.name}</h3>
-                <div className="exercise-badges">
-                  {exercise.quietDiscreet && (
-                    <span className="badge quiet">🤫 Quiet & Discreet</span>
-                  )}
-                  {exercise.needsHeadphones && (
-                    <span className="badge headphones">🎧 With headphones</span>
-                  )}
+        <div className="orb-wrap">
+          <div
+            className={`orb orb--${phase.key}`}
+            style={{ '--dur': `${phase.duration}s` }}
+          >
+            <div className="orb-inner">
+              <span className="orb-phase">{phase.name}</span>
+              <span className="orb-count">{phaseTimeLeft}</span>
+            </div>
+          </div>
+        </div>
+
+        <p className="ex-instruction">{phase.instruction}</p>
+
+        <div className="ex-footer">
+          <div className="progress-track">
+            <div className="progress-fill" style={{ width: `${progress}%` }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Assessment — question flow
+  if (view === 'assessment') {
+    const q = QUESTIONS[assessStep];
+    const isFirst = assessStep === 0;
+
+    const handleBack = () => {
+      if (!isFirst) {
+        setAssessStep(s => s - 1);
+      } else if (onExit) {
+        onExit();
+      } else {
+        setView('home');
+      }
+    };
+
+    const handleOption = (val) => {
+      const next = { ...assessAnswers, [q.id]: val };
+      setAssessAnswers(next);
+
+      if (assessStep < QUESTIONS.length - 1) {
+        setAssessStep(s => s + 1);
+      } else {
+        const key = getRecommendation(next.feeling, next.time);
+        setRecommendedKey(key);
+        setView('recommendation');
+      }
+    };
+
+    return (
+      <div className="app-screen">
+        <header className="app-header">
+          <button className="back-link" onClick={handleBack}>
+            {isFirst ? '← Home' : '← Back'}
+          </button>
+          <span className="header-brand">Present</span>
+          <span className="assess-progress">
+            {assessStep + 1}&thinsp;/&thinsp;{QUESTIONS.length}
+          </span>
+        </header>
+
+        <main className="assess-main">
+          <h2 className="assess-q">{q.q}</h2>
+          <div className="assess-opts">
+            {q.opts.map(opt => (
+              <button
+                key={opt.value}
+                className="assess-opt"
+                onClick={() => handleOption(opt.value)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Recommendation
+  if (view === 'recommendation' && recommendedKey) {
+    const ex = EXERCISES[recommendedKey];
+    const isQuick = assessAnswers.time === 'short';
+    const duration = isQuick ? ex.quickDuration : ex.duration;
+    const context = FEELING_CONTEXT[assessAnswers.feeling];
+
+    const handleBack = () => {
+      setAssessStep(QUESTIONS.length - 1);
+      setView('assessment');
+    };
+
+    return (
+      <div className="app-screen">
+        <header className="app-header">
+          <button className="back-link" onClick={handleBack}>← Back</button>
+          <span className="header-brand">Present</span>
+          <span />
+        </header>
+
+        <main className="rec-main">
+          <p className="rec-eyebrow">Recommended for you</p>
+
+          <div className="rec-card">
+            <h2 className="rec-name">{ex.name}</h2>
+            <p className="rec-desc">{ex.description}</p>
+            <div className="rec-meta">
+              <span>{fmt(duration)}</span>
+              <span className="rec-dot">·</span>
+              <span>{CATEGORIES[ex.category].name}</span>
+            </div>
+            {context && (
+              <p className="rec-context">{context}</p>
+            )}
+          </div>
+
+          <button
+            className="btn btn--primary btn--full rec-start"
+            onClick={() => startExercise(recommendedKey, isQuick)}
+          >
+            Start session →
+          </button>
+          <button
+            className="btn btn--ghost btn--full"
+            onClick={() => setView('home')}
+          >
+            Browse all exercises
+          </button>
+        </main>
+      </div>
+    );
+  }
+
+  // Category view
+  if (view === 'category' && selectedCategory) {
+    const cat = CATEGORIES[selectedCategory];
+    return (
+      <div className="app-screen">
+        <header className="app-header">
+          <button className="back-link" onClick={() => setView('home')}>← Back</button>
+          <span className="header-title">{cat.name}</span>
+          <span />
+        </header>
+        <main className="list-main">
+          {cat.exercises.map(key => {
+            const ex = EXERCISES[key];
+            return (
+              <div key={key} className="ex-row">
+                <div className="ex-row-info">
+                  <h3>{ex.name}</h3>
+                  <p>{ex.description}</p>
+                </div>
+                <div className="ex-row-actions">
+                  <button className="btn btn--ghost" onClick={() => startExercise(key, true)}>
+                    {fmt(ex.quickDuration)}
+                  </button>
+                  <button className="btn btn--primary" onClick={() => startExercise(key, false)}>
+                    {fmt(ex.duration)}
+                  </button>
                 </div>
               </div>
-              <p className="exercise-desc">{exercise.description}</p>
-              <div className="exercise-actions">
-                <button 
-                  className="start-btn quick"
-                  onClick={() => startExercise(exercise.key, true)}
-                >
-                  Quick
-                </button>
-                <button 
-                  className="start-btn full"
-                  onClick={() => startExercise(exercise.key, false)}
-                >
-                  Full
-                </button>
-              </div>
-            </div>
+            );
+          })}
+        </main>
+      </div>
+    );
+  }
+
+  // Home — browse categories
+  return (
+    <div className="app-screen">
+      <header className="app-header">
+        {onExit
+          ? <button className="back-link" onClick={onExit}>← Home</button>
+          : <span />
+        }
+        <span className="header-brand">Present</span>
+        <span />
+      </header>
+      <main className="home-main">
+        <h1 className="home-heading">What do you need?</h1>
+        <div className="cat-grid">
+          {Object.entries(CATEGORIES).map(([key, cat]) => (
+            <button
+              key={key}
+              className="cat-card"
+              onClick={() => { setSelectedCategory(key); setView('category'); }}
+            >
+              <span className="cat-name">{cat.name}</span>
+              <span className="cat-desc">{cat.description}</span>
+            </button>
           ))}
         </div>
-      </div>
-    );
-  };
+      </main>
+    </div>
+  );
+}
 
-  // Exercise View
-  const ExerciseView = () => {
-    const currentPhase = currentExercise?.phases.find(p => 
-      p.name.toLowerCase().replace(' ', '') === breathPhase
-    ) || currentExercise?.phases[0];
+// ── Feedback ─────────────────────────────────────────────────────────────────
 
-    const categoryColor = categories[currentExercise?.category]?.color || colors.softBlue;
+function FeedbackScreen({ onDone, exerciseName }) {
+  const [answers, setAnswers] = useState({});
+  const questions = [
+    { id: 'feeling', q: 'How do you feel?',    opts: ['Much better', 'Better', 'Same', 'Worse'] },
+    { id: 'helpful', q: 'Was this helpful?', opts: ['Very', 'Helpful', 'Somewhat', 'Not really'] },
+  ];
+  const allAnswered = questions.every(q => answers[q.id]);
 
-    return (
-      <div className={`exercise-active ${quietMode ? 'quiet-mode' : ''}`}>
-        <div className="exercise-top-bar">
-          <button className="back-btn" onClick={stopExercise}>←</button>
-          <div className="timer-display">{formatTime(timeLeft)}</div>
-        </div>
+  return (
+    <div className="fb-screen">
+      <div className="fb-card">
+        <h2>Session complete</h2>
+        {exerciseName && <p className="fb-sub">{exerciseName}</p>}
 
-        <div className="breathing-circle-container">
-          <div 
-            className={`breathing-circle ${breathPhase}`}
-            style={{ 
-              '--category-color': categoryColor,
-              transform: quietMode ? 'scale(0.9)' : undefined
-            }}
-          >
-            <div className="circle-inner">
-              <span className="phase-name">{currentPhase?.name}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="instruction-text">
-          <p>{currentPhase?.instruction}</p>
-        </div>
-
-        {quietMode && (
-          <div className="quiet-mode-indicator">
-            <span>🤫 Quiet Mode - No heavy breathing or sounds</span>
-          </div>
-        )}
-
-        <div className="exercise-progress">
-          <div className="progress-bar">
-            <div 
-              className="progress-fill"
-              style={{ 
-                width: `${((currentExercise.actualDuration - timeLeft) / currentExercise.actualDuration) * 100}%`,
-                backgroundColor: categoryColor
-              }}
-            />
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Feedback View
-  const FeedbackView = () => {
-    const [answers, setAnswers] = useState({});
-
-    const handleAnswer = (questionId, answer) => {
-      setAnswers(prev => ({ ...prev, [questionId]: answer }));
-    };
-
-    const isComplete = Object.keys(answers).length === feedbackQuestions.length;
-
-    return (
-      <div className="feedback-view">
-        <div className="feedback-header">
-          <h2>How did it go?</h2>
-        </div>
-
-        <div className="feedback-questions">
-          {feedbackQuestions.map((q) => (
-            <div key={q.id} className="feedback-question">
-              <h3>{q.question}</h3>
-              <div className="feedback-options">
-                {q.options.map((option) => (
+        <div className="fb-questions">
+          {questions.map(({ id, q, opts }) => (
+            <div key={id} className="fb-q">
+              <p className="fb-label">{q}</p>
+              <div className="fb-opts">
+                {opts.map(opt => (
                   <button
-                    key={option}
-                    className={`feedback-option ${answers[q.id] === option ? 'selected' : ''}`}
-                    onClick={() => handleAnswer(q.id, option)}
+                    key={opt}
+                    className={`fb-opt${answers[id] === opt ? ' selected' : ''}`}
+                    onClick={() => setAnswers(a => ({ ...a, [id]: opt }))}
                   >
-                    {option}
+                    {opt}
                   </button>
                 ))}
               </div>
@@ -569,28 +550,17 @@ const App = () => {
           ))}
         </div>
 
-        <div className="feedback-actions">
-          <button className="skip-btn" onClick={skipFeedback}>Skip</button>
-          <button 
-            className="done-btn"
-            onClick={() => completeFeedback(answers)}
-            disabled={!isComplete}
-          >
-            Done
-          </button>
-        </div>
+        <button
+          className="btn btn--primary btn--full"
+          onClick={onDone}
+          disabled={!allAnswered}
+        >
+          Done
+        </button>
+        <button className="btn btn--ghost btn--full" onClick={onDone}>
+          Skip
+        </button>
       </div>
-    );
-  };
-
-  return (
-    <div className={`app ${quietMode ? 'quiet-mode-active' : ''}`}>
-      {currentView === 'home' && <HomeView />}
-      {currentView === 'category' && <CategoryView />}
-      {currentView === 'exercise' && !showFeedback && <ExerciseView />}
-      {showFeedback && <FeedbackView />}
     </div>
   );
-};
-
-export default App;
+}
