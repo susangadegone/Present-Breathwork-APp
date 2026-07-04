@@ -214,6 +214,56 @@ const FEELING_CONTEXT = {
 const getRecommendation = (feeling, time) =>
   RECOMMEND_MAP[feeling]?.[time] || 'boxBreathing';
 
+// ── Mood tracker ─────────────────────────────────────────────────────────────
+
+const MOOD_LEVELS = [
+  { value: 'awful', emoji: '😞', label: 'Awful', score: 1 },
+  { value: 'low',   emoji: '😕', label: 'Low',   score: 2 },
+  { value: 'okay',  emoji: '😐', label: 'Okay',  score: 3 },
+  { value: 'good',  emoji: '🙂', label: 'Good',  score: 4 },
+  { value: 'great', emoji: '😄', label: 'Great', score: 5 },
+];
+
+const MOOD_STORAGE_KEY = 'present_mood_entries';
+
+const loadMoodEntries = () => {
+  try {
+    const raw = localStorage.getItem(MOOD_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveMoodEntries = (entries) => {
+  try {
+    localStorage.setItem(MOOD_STORAGE_KEY, JSON.stringify(entries));
+  } catch {
+    // localStorage unavailable (e.g. private browsing) — entries stay in memory only
+  }
+};
+
+const isSameDay = (isoA, dateB) => new Date(isoA).toDateString() === dateB.toDateString();
+
+const getLast7Days = (entries) => {
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dayEntries = entries.filter(e => isSameDay(e.date, d));
+    const avgScore = dayEntries.length
+      ? dayEntries.reduce((sum, e) => sum + e.score, 0) / dayEntries.length
+      : 0;
+    days.push({
+      key: d.toDateString(),
+      label: d.toLocaleDateString(undefined, { weekday: 'narrow' }),
+      avgScore,
+      hasEntry: dayEntries.length > 0,
+    });
+  }
+  return days;
+};
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
@@ -239,7 +289,46 @@ export default function App({ onExit, initialView = 'home' }) {
   const [phaseTimeLeft, setPhaseTimeLeft] = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
 
+  // Mood tracker state
+  const [moodEntries, setMoodEntries] = useState(() => loadMoodEntries());
+  const [moodDraft, setMoodDraft] = useState(null);
+  const [moodNote, setMoodNote] = useState('');
+
   const phaseRef = useRef({ index: 0, timeLeft: 0 });
+
+  const openMoodCheckin = (value) => {
+    setMoodDraft(value);
+    setMoodNote('');
+    setView('mood');
+  };
+
+  const saveMood = () => {
+    if (!moodDraft) return;
+    const level = MOOD_LEVELS.find(m => m.value === moodDraft);
+    const entry = {
+      id: Date.now(),
+      date: new Date().toISOString(),
+      mood: level.value,
+      score: level.score,
+      emoji: level.emoji,
+      label: level.label,
+      note: moodNote.trim(),
+    };
+    const next = [entry, ...moodEntries];
+    setMoodEntries(next);
+    saveMoodEntries(next);
+    setMoodDraft(null);
+    setMoodNote('');
+    setView('moodSaved');
+  };
+
+  const deleteMoodEntry = (id) => {
+    const next = moodEntries.filter(e => e.id !== id);
+    setMoodEntries(next);
+    saveMoodEntries(next);
+  };
+
+  const todaysMoodEntry = moodEntries.find(e => isSameDay(e.date, new Date()));
 
   const startExercise = (key, quick = false) => {
     const ex = EXERCISES[key];
@@ -335,6 +424,129 @@ export default function App({ onExit, initialView = 'home' }) {
             <div className="progress-fill" style={{ width: `${progress}%` }} />
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // Mood check-in
+  if (view === 'mood') {
+    const handleBack = () => { setMoodDraft(null); setMoodNote(''); setView('home'); };
+    return (
+      <div className="app-screen">
+        <header className="app-header">
+          <button className="back-link" onClick={handleBack}>← Home</button>
+          <span className="header-brand">Present</span>
+          <span />
+        </header>
+        <main className="assess-main">
+          <h2 className="assess-q">How are you feeling?</h2>
+          <div className="mood-picker">
+            {MOOD_LEVELS.map(m => (
+              <button
+                key={m.value}
+                className={`mood-pick-opt${moodDraft === m.value ? ' selected' : ''}`}
+                onClick={() => setMoodDraft(m.value)}
+              >
+                <span className="mood-pick-emoji">{m.emoji}</span>
+                <span>{m.label}</span>
+              </button>
+            ))}
+          </div>
+          <textarea
+            className="mood-note-input"
+            placeholder="Add a note (optional)"
+            value={moodNote}
+            onChange={(e) => setMoodNote(e.target.value)}
+            rows={3}
+          />
+          <button
+            className="btn btn--primary btn--full"
+            onClick={saveMood}
+            disabled={!moodDraft}
+          >
+            Save check-in
+          </button>
+        </main>
+      </div>
+    );
+  }
+
+  // Mood saved confirmation
+  if (view === 'moodSaved') {
+    return (
+      <div className="fb-screen">
+        <div className="fb-card">
+          <h2>Mood logged</h2>
+          <p className="fb-sub">Thanks for checking in with yourself.</p>
+          <button className="btn btn--primary btn--full" onClick={() => setView('moodHistory')}>
+            View mood history
+          </button>
+          <button className="btn btn--ghost btn--full" onClick={() => setView('home')}>
+            Done
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Mood history
+  if (view === 'moodHistory') {
+    const last7 = getLast7Days(moodEntries);
+    return (
+      <div className="app-screen">
+        <header className="app-header">
+          <button className="back-link" onClick={() => setView('home')}>← Home</button>
+          <span className="header-title">Mood History</span>
+          <span />
+        </header>
+        <main className="mood-history-main">
+          <div className="mood-chart">
+            {last7.map(day => (
+              <div className="mood-chart-col" key={day.key}>
+                <div className="mood-chart-bar-track">
+                  <div
+                    className={`mood-chart-bar${day.hasEntry ? '' : ' empty'}`}
+                    style={{
+                      height: day.hasEntry ? `${(day.avgScore / 5) * 100}%` : '4%',
+                      opacity: day.hasEntry ? 0.3 + (day.avgScore / 5) * 0.7 : 1,
+                    }}
+                  />
+                </div>
+                <span className="mood-chart-day">{day.label}</span>
+              </div>
+            ))}
+          </div>
+
+          {moodEntries.length === 0 ? (
+            <p className="mood-empty">No mood entries yet. Check in from the home screen.</p>
+          ) : (
+            <div className="mood-list">
+              {moodEntries.map(entry => (
+                <div key={entry.id} className="mood-entry-row">
+                  <span className="mood-entry-emoji">{entry.emoji}</span>
+                  <div className="mood-entry-info">
+                    <div className="mood-entry-top">
+                      <span className="mood-entry-label">{entry.label}</span>
+                      <span className="mood-entry-date">
+                        {new Date(entry.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                        {' · '}
+                        {new Date(entry.date).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    {entry.note && <p className="mood-entry-note">{entry.note}</p>}
+                  </div>
+                  <button
+                    className="mood-entry-delete"
+                    onClick={() => deleteMoodEntry(entry.id)}
+                    aria-label="Delete entry"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </main>
       </div>
     );
   }
@@ -497,6 +709,33 @@ export default function App({ onExit, initialView = 'home' }) {
         <span />
       </header>
       <main className="home-main">
+        <section className="mood-section">
+          <div className="mood-section-head">
+            <h2 className="mood-section-title">How are you feeling?</h2>
+            <button className="mood-history-link" onClick={() => setView('moodHistory')}>
+              History →
+            </button>
+          </div>
+          <div className="mood-quick-row">
+            {MOOD_LEVELS.map(m => (
+              <button
+                key={m.value}
+                className={`mood-quick-btn${todaysMoodEntry?.mood === m.value ? ' selected' : ''}`}
+                onClick={() => openMoodCheckin(m.value)}
+                aria-label={m.label}
+              >
+                <span className="mood-quick-emoji">{m.emoji}</span>
+                <span className="mood-quick-label">{m.label}</span>
+              </button>
+            ))}
+          </div>
+          {todaysMoodEntry && (
+            <p className="mood-today-note">
+              Logged today: {todaysMoodEntry.emoji} {todaysMoodEntry.label}
+            </p>
+          )}
+        </section>
+
         <h1 className="home-heading">What do you need?</h1>
         <div className="cat-grid">
           {Object.entries(CATEGORIES).map(([key, cat]) => (
